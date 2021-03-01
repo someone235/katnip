@@ -1,26 +1,55 @@
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import Container from '@material-ui/core/Container';
+import Typography from '@material-ui/core/Typography';
+import Box from '@material-ui/core/Box';
+import Link from '@material-ui/core/Link';
+import {createMuiTheme, CssBaseline} from '@material-ui/core';
+import {ThemeProvider} from "@material-ui/styles";
+import {
+    HashRouter,
+    Route,
+} from "react-router-dom";
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+import Home from './Home';
+import Block from './Block';
+import Tx from './Tx';
+import Search from './Search';
+import SearchPage from './SearchPage';
+
+
+const theme = createMuiTheme({
+    palette: {
+        type: "dark"
+    }
+});
+
+export default function App() {
+    return (
+        <ThemeProvider theme={theme}>
+            <CssBaseline/>
+            <Container maxWidth="lg">
+                <Box my={4}>
+                    <Typography variant="h4" component="h1" gutterBottom>
+                        <Link href={"/"}><img alt={""} src={"/img/Phoenician_kaph.svg"}/></Link> Katnip - Kaspa Block
+                        Explorer
+                    </Typography>
+                    <Search/>
+                    <HashRouter>
+                        <Route exact path="/">
+                            <Home/>
+                        </Route>
+                        <Route path="/block/:hash">
+                            <Block/>
+                        </Route>
+                        <Route path="/tx/:id">
+                            <Tx/>
+                        </Route>
+                        <Route path="/search/:search">
+                            <SearchPage/>
+                        </Route>
+                    </HashRouter>
+                </Box>
+            </Container>
+        </ThemeProvider>
+    );
 }
-
-export default App;
