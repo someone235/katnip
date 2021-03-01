@@ -166,4 +166,3 @@ func GetTransactionDoubleSpends(txID string) (interface{}, error) {
 		Transactions: txResponses,
 	}, nil
 }
-

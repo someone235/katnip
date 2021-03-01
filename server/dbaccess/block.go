@@ -53,6 +53,7 @@ func BlocksByHashes(ctx database.Context, hashes []string, preloadedFields ...db
 	return blocks, nil
 }
 
+// ExistingHashes filters out the non existing hashes from the given list
 func ExistingHashes(ctx database.Context, hashes []string) ([]string, error) {
 	if len(hashes) == 0 {
 		return nil, nil

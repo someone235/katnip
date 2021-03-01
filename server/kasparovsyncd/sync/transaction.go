@@ -139,7 +139,7 @@ func convertTxRawResultToMsgTx(tx *appmessage.TransactionVerboseData) (*appmessa
 			return nil, err
 		}
 		txOuts[i] = &appmessage.TxOut{
-			Value:        txOut.Value,
+			Value: txOut.Value,
 			ScriptPubKey: &externalapi.ScriptPublicKey{
 				Script:  scriptPubKey,
 				Version: 0, // TODO: Update it with real version

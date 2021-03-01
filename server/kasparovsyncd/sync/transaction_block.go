@@ -16,7 +16,7 @@ func insertTransactionBlocks(dbTx *database.TxContext, blocks []*appmessage.Bloc
 	for _, block := range blocks {
 		blockID, ok := blockHashesToIDs[block.Hash]
 		if !ok {
-			return errors.Errorf("couldn't find block ID for block %s", block)
+			return errors.Errorf("couldn't find block ID for block %s", block.Hash)
 		}
 		for i, tx := range block.TransactionVerboseData {
 			transactionBlocksToAdd = append(transactionBlocksToAdd, &dbmodels.TransactionBlock{

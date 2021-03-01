@@ -208,7 +208,7 @@ func fetchMissingAncestors(client *kaspadrpc.Client, dbTx *database.TxContext, b
 			}
 			continue
 		}
-		log.Debugf("Found %s missing parents for block %s and fetched them", blocksToPrependToPending, currentBlock)
+		log.Debugf("Found %d missing parents for block %s and fetched them", len(blocksToPrependToPending), currentBlock.Hash)
 		blocksToPrependToPending = append(blocksToPrependToPending, currentBlock)
 		pendingBlocks = append(blocksToPrependToPending, pendingBlocks...)
 	}

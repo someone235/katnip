@@ -15,7 +15,7 @@ const timeout = 10 * time.Second
 type Client struct {
 	*rpcclient.RPCClient
 
-	OnBlockAdded   chan *appmessage.BlockAddedNotificationMessage
+	OnBlockAdded chan *appmessage.BlockAddedNotificationMessage
 }
 
 var clientInstance *Client
@@ -43,8 +43,8 @@ func NewClient(cfg *config.KasparovFlags, subscribeToNotifications bool) (*Clien
 
 	const channelCapacity = 1_000_000
 	client := &Client{
-		RPCClient:      rpcClient,
-		OnBlockAdded:   make(chan *appmessage.BlockAddedNotificationMessage, channelCapacity),
+		RPCClient:    rpcClient,
+		OnBlockAdded: make(chan *appmessage.BlockAddedNotificationMessage, channelCapacity),
 	}
 
 	if subscribeToNotifications {
