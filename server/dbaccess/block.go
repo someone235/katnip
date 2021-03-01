@@ -53,6 +53,27 @@ func BlocksByHashes(ctx database.Context, hashes []string, preloadedFields ...db
 	return blocks, nil
 }
 
+func ExistingHashes(ctx database.Context, hashes []string) ([]string, error) {
+	if len(hashes) == 0 {
+		return nil, nil
+	}
+
+	db, err := ctx.DB()
+	if err != nil {
+		return nil, err
+	}
+
+	existingBlockHashes := make([]string, 0, len(hashes))
+	query := db.Model(&dbmodels.Block{}).Where("block.block_hash in (?)", pg.In(hashes)).
+		ColumnExpr("block_hash")
+	err = query.Select(&existingBlockHashes)
+	if err != nil {
+		return nil, err
+	}
+
+	return existingBlockHashes, nil
+}
+
 // Blocks retrieves from the database up to `limit` blocks in the requested `order`, skipping the first `skip` blocks
 // If preloadedFields was provided - preloads the requested fields
 func Blocks(ctx database.Context, order Order, skip uint64, limit uint64,

@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/hex"
+	"github.com/kaspanet/kaspad/domain/consensus/model/externalapi"
 	"github.com/kaspanet/kasparov/database"
 	"net/http"
 
@@ -11,7 +12,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/kaspanet/kaspad/util/daghash"
 	"github.com/kaspanet/kasparov/httpserverutils"
 )
 
@@ -19,12 +19,14 @@ const maxGetBlocksLimit = 100
 
 // GetBlockByHashHandler returns a block by a given hash.
 func GetBlockByHashHandler(blockHash string) (interface{}, error) {
-	if bytes, err := hex.DecodeString(blockHash); err != nil || len(bytes) != daghash.HashSize {
+	if bytes, err := hex.DecodeString(blockHash); err != nil || len(bytes) != externalapi.DomainHashSize {
 		return nil, httpserverutils.NewHandlerError(http.StatusUnprocessableEntity,
-			errors.Errorf("the given block hash is not a hex-encoded %d-byte hash", daghash.HashSize))
+			errors.Errorf("the given block hash is not a hex-encoded %d-byte hash", externalapi.DomainHashSize))
 	}
 
-	block, err := dbaccess.BlockByHash(database.NoTx(), blockHash, dbmodels.BlockRecommendedPreloadedFields...)
+	preloadedFields := append([]dbmodels.FieldName{dbmodels.BlockFieldNames.Transactions},
+		dbmodels.BlockRecommendedPreloadedFields...)
+	block, err := dbaccess.BlockByHash(database.NoTx(), blockHash, preloadedFields...)
 	if err != nil {
 		return nil, err
 	}

@@ -2,7 +2,6 @@ package sync
 
 import (
 	"encoding/hex"
-	"github.com/kaspanet/kaspad/util/pointers"
 	"github.com/kaspanet/kasparov/database"
 
 	"github.com/kaspanet/kasparov/dbaccess"
@@ -28,7 +27,8 @@ func insertTransactionOutputs(dbTx *database.TxContext, transactionHashesToTxsWi
 			}
 			var addressID *uint64
 			if txOut.ScriptPubKey.Address != "" {
-				addressID = pointers.Uint64(addressesToAddressIDs[txOut.ScriptPubKey.Address])
+				addressIDValue := addressesToAddressIDs[txOut.ScriptPubKey.Address]
+				addressID = &addressIDValue
 			}
 			outputsToAdd = append(outputsToAdd, &dbmodels.TransactionOutput{
 				TransactionID: transaction.id,

@@ -3,10 +3,10 @@ package sync
 import (
 	"encoding/hex"
 	"github.com/kaspanet/kaspad/app/appmessage"
+	"github.com/kaspanet/kaspad/domain/consensus/utils/subnetworks"
 	"github.com/kaspanet/kasparov/database"
 	"github.com/kaspanet/kasparov/serializer"
 
-	"github.com/kaspanet/kaspad/util/subnetworkid"
 	"github.com/kaspanet/kasparov/dbaccess"
 	"github.com/kaspanet/kasparov/dbmodels"
 	"github.com/pkg/errors"
@@ -97,9 +97,9 @@ func insertTransactionInputs(dbTx *database.TxContext, transactionHashesToTxsWit
 }
 
 func isTransactionCoinbase(transaction *appmessage.TransactionVerboseData) (bool, error) {
-	subnetwork, err := subnetworkid.NewFromStr(transaction.SubnetworkID)
+	subnetwork, err := subnetworks.FromString(transaction.SubnetworkID)
 	if err != nil {
 		return false, err
 	}
-	return subnetwork.IsEqual(subnetworkid.SubnetworkIDCoinbase), nil
+	return subnetwork.Equal(&subnetworks.SubnetworkIDCoinbase), nil
 }

@@ -16,7 +16,6 @@ type Client struct {
 	*rpcclient.RPCClient
 
 	OnBlockAdded   chan *appmessage.BlockAddedNotificationMessage
-	OnChainChanged chan *appmessage.ChainChangedNotificationMessage
 }
 
 var clientInstance *Client
@@ -46,7 +45,6 @@ func NewClient(cfg *config.KasparovFlags, subscribeToNotifications bool) (*Clien
 	client := &Client{
 		RPCClient:      rpcClient,
 		OnBlockAdded:   make(chan *appmessage.BlockAddedNotificationMessage, channelCapacity),
-		OnChainChanged: make(chan *appmessage.ChainChangedNotificationMessage, channelCapacity),
 	}
 
 	if subscribeToNotifications {
@@ -55,12 +53,6 @@ func NewClient(cfg *config.KasparovFlags, subscribeToNotifications bool) (*Clien
 		})
 		if err != nil {
 			return nil, errors.Wrapf(err, "error requesting block-added notifications")
-		}
-		err = rpcClient.RegisterForChainChangedNotifications(func(notification *appmessage.ChainChangedNotificationMessage) {
-			client.OnChainChanged <- notification
-		})
-		if err != nil {
-			return nil, errors.Wrapf(err, "error requesting chain-changed notifications")
 		}
 	}
 

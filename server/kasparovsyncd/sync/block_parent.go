@@ -9,10 +9,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-func insertBlockParents(dbTx *database.TxContext, blocks []*rawAndVerboseBlock, blockHashesToIDs map[string]uint64) error {
+func insertBlockParents(dbTx *database.TxContext, blocks []*appmessage.BlockVerboseData, blockHashesToIDs map[string]uint64) error {
 	parentsToAdd := make([]interface{}, 0)
 	for _, block := range blocks {
-		dbBlockParents, err := dbParentBlocksFromVerboseBlock(blockHashesToIDs, block.Verbose)
+		dbBlockParents, err := dbParentBlocksFromVerboseBlock(blockHashesToIDs, block)
 		if err != nil {
 			return err
 		}

@@ -1,6 +1,7 @@
 package sync
 
 import (
+	"github.com/kaspanet/kaspad/app/appmessage"
 	"github.com/kaspanet/kasparov/database"
 	"github.com/kaspanet/kasparov/dbaccess"
 	"github.com/kaspanet/kasparov/dbmodels"
@@ -9,12 +10,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-func insertSubnetworks(client *kaspadrpc.Client, dbTx *database.TxContext, blocks []*rawAndVerboseBlock) (
+func insertSubnetworks(client *kaspadrpc.Client, dbTx *database.TxContext, verboseBlocks []*appmessage.BlockVerboseData) (
 	subnetworkIDsToIDs map[string]uint64, err error) {
 
 	subnetworkSet := make(map[string]struct{})
-	for _, block := range blocks {
-		for _, transaction := range block.Verbose.TransactionVerboseData {
+	for _, block := range verboseBlocks {
+		for _, transaction := range block.TransactionVerboseData {
 			subnetworkSet[transaction.SubnetworkID] = struct{}{}
 		}
 	}
@@ -41,14 +42,7 @@ func insertSubnetworks(client *kaspadrpc.Client, dbTx *database.TxContext, block
 
 	subnetworksToAdd := make([]interface{}, len(newSubnetworkIDs))
 	for i, subnetworkID := range newSubnetworkIDs {
-		subnetwork, err := client.GetSubnetwork(subnetworkID)
-		if err != nil {
-			return nil, err
-		}
-		var gasLimit *uint64
-		if subnetwork.GasLimit > 0 {
-			gasLimit = &subnetwork.GasLimit
-		}
+		var gasLimit *uint64 // TODO: Fill with real value
 		subnetworksToAdd[i] = &dbmodels.Subnetwork{
 			SubnetworkID: subnetworkID,
 			GasLimit:     gasLimit,

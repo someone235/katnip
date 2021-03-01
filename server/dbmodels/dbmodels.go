@@ -14,7 +14,7 @@ type Block struct {
 	BlockHash            string `pg:",use_zero"`
 	AcceptingBlockID     *uint64
 	AcceptingBlock       *Block
-	Version              int32          `pg:",use_zero"`
+	Version              uint16         `pg:",use_zero"`
 	HashMerkleRoot       string         `pg:",use_zero"`
 	AcceptedIDMerkleRoot string         `pg:",use_zero"`
 	UTXOCommitment       string         `pg:",use_zero"`
@@ -23,7 +23,8 @@ type Block struct {
 	Nonce                []byte         `pg:",use_zero"`
 	BlueScore            uint64         `pg:",use_zero"`
 	IsChainBlock         bool           `pg:",use_zero"`
-	Mass                 uint64         `pg:",use_zero"`
+	TransactionCount     uint16         `pg:",use_zero"`
+	Difficulty           float64        `pg:",use_zero"`
 	ParentBlocks         []*Block       `pg:"many2many:parent_blocks,joinFK:parent_block_id"`
 	AcceptedBlocks       []*Block       `pg:"many2many:accepted_blocks,joinFK:accepted_block_id"`
 	Transactions         []*Transaction `pg:"many2many:transactions_to_blocks,joinFK:transaction_id"`
@@ -31,22 +32,16 @@ type Block struct {
 
 // BlockFieldNames is a list of FieldNames for the 'Block' object
 var BlockFieldNames = struct {
-	AcceptingBlock,
 	ParentBlocks,
-	AcceptedBlocks,
 	Transactions FieldName
 }{
-	AcceptingBlock: "AcceptingBlock",
-	ParentBlocks:   "ParentBlocks",
-	AcceptedBlocks: "AcceptedBlocks",
-	Transactions:   "Transactions",
+	ParentBlocks: "ParentBlocks",
+	Transactions: "Transactions",
 }
 
 // BlockRecommendedPreloadedFields is a list of fields recommended to preload when getting blocks
 var BlockRecommendedPreloadedFields = []FieldName{
-	BlockFieldNames.AcceptingBlock,
 	BlockFieldNames.ParentBlocks,
-	BlockFieldNames.AcceptedBlocks,
 }
 
 // ParentBlock is the database model for the 'parent_blocks' table
@@ -114,12 +109,11 @@ type Transaction struct {
 	LockTime           []byte `pg:",use_zero"`
 	SubnetworkID       uint64 `pg:",use_zero"`
 	Subnetwork         Subnetwork
-	Gas                uint64 `pg:",use_zero"`
-	PayloadHash        string `pg:",use_zero"`
-	Payload            []byte `pg:",use_zero"`
-	Mass               uint64 `pg:",use_zero"`
-	Version            int32  `pg:",use_zero"`
-	RawTransaction     *RawTransaction
+	Gas                uint64  `pg:",use_zero"`
+	PayloadHash        string  `pg:",use_zero"`
+	Payload            []byte  `pg:",use_zero"`
+	Mass               uint64  `pg:",use_zero"`
+	Version            uint16  `pg:",use_zero"`
 	Blocks             []Block `pg:"many2many:transactions_to_blocks"`
 	TransactionOutputs []TransactionOutput
 	TransactionInputs  []TransactionInput
@@ -129,7 +123,6 @@ type Transaction struct {
 var TransactionFieldNames = struct {
 	AcceptingBlock                   FieldName
 	Subnetwork                       FieldName
-	RawTransaction                   FieldName
 	Blocks                           FieldName
 	TransactionOutputs               FieldName
 	TransactionInputs                FieldName
@@ -137,10 +130,10 @@ var TransactionFieldNames = struct {
 	InputsPreviousTransactionOutputs FieldName
 	InputsPreviousTransactions       FieldName
 	InputsAddresses                  FieldName
+	InputsValues                     FieldName
 }{
 	AcceptingBlock:                   "AcceptingBlock",
 	Subnetwork:                       "Subnetwork",
-	RawTransaction:                   "RawTransaction",
 	Blocks:                           "Blocks",
 	TransactionOutputs:               "TransactionOutputs",
 	TransactionInputs:                "TransactionInputs",
@@ -148,17 +141,18 @@ var TransactionFieldNames = struct {
 	InputsPreviousTransactionOutputs: "TransactionInputs.PreviousTransactionOutput",
 	InputsPreviousTransactions:       "TransactionInputs.PreviousTransactionOutput.Transaction",
 	InputsAddresses:                  "TransactionInputs.PreviousTransactionOutput.Address",
+	InputsValues:                     "TransactionInputs.PreviousTransactionOutput.value",
 }
 
 // TransactionRecommendedPreloadedFields is a list of fields recommended to preload when getting transactions
 var TransactionRecommendedPreloadedFields = []FieldName{
 	TransactionFieldNames.AcceptingBlock,
 	TransactionFieldNames.Subnetwork,
-	TransactionFieldNames.RawTransaction,
 	TransactionFieldNames.TransactionOutputs,
 	TransactionFieldNames.OutputsAddresses,
 	TransactionFieldNames.InputsPreviousTransactions,
 	TransactionFieldNames.InputsAddresses,
+	TransactionFieldNames.InputsValues,
 }
 
 // TransactionBlock is the database model for the 'transactions_to_blocks' table
@@ -239,20 +233,6 @@ type Address struct {
 	Address string `pg:",use_zero"`
 }
 
-// RawTransaction is the database model for the 'raw_transactions' table
-type RawTransaction struct {
-	TransactionID   uint64 `pg:",use_zero"`
-	Transaction     Transaction
-	TransactionData []byte `pg:",use_zero"`
-}
-
-// RawTransactionFieldNames is a list of FieldNames for the 'RawTransaction' object
-var RawTransactionFieldNames = struct {
-	Transaction FieldName
-}{
-	Transaction: "Transaction",
-}
-
 // PrefixFieldNames returns the given fields prefixed
 // with the given prefix and a dot.
 func PrefixFieldNames(prefix FieldName, fields []FieldName) []FieldName {
@@ -261,4 +241,10 @@ func PrefixFieldNames(prefix FieldName, fields []FieldName) []FieldName {
 		prefixedFields[i] = prefix + FieldName(".") + fieldName
 	}
 	return prefixedFields
+}
+
+// PrefixFieldName returns the given field prefixed
+// with the given prefix and a dot.
+func PrefixFieldName(prefix FieldName, field FieldName) FieldName {
+	return prefix + FieldName(".") + field
 }

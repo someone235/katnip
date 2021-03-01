@@ -14,9 +14,8 @@ type TransactionResponse struct {
 	Inputs                  []*TransactionInputResponse  `json:"inputs"`
 	Outputs                 []*TransactionOutputResponse `json:"outputs"`
 	Mass                    uint64                       `json:"mass"`
-	Version                 int32                        `json:"version"`
-	Raw                     string                       `json:"raw"`
-	Confirmations           *uint64                      `json:"confirmations,omitempty"`
+	Version                 uint16                       `json:"version"`
+	Blocks                  []*BlockResponse             `json:"blocks"`
 }
 
 // TransactionOutputResponse is a json representation of a transaction output
@@ -52,22 +51,19 @@ type TransactionsResponse struct {
 
 // BlockResponse is a json representation of a block
 type BlockResponse struct {
-	BlockHash               string   `json:"blockHash"`
-	Version                 int32    `json:"version"`
-	HashMerkleRoot          string   `json:"hashMerkleRoot"`
-	AcceptedIDMerkleRoot    string   `json:"acceptedIDMerkleRoot"`
-	UTXOCommitment          string   `json:"utxoCommitment"`
-	Timestamp               uint64   `json:"timestamp"`
-	Bits                    uint32   `json:"bits"`
-	Nonce                   uint64   `json:"nonce"`
-	ParentBlockHashes       []string `json:"parentBlockHashes"`
-	AcceptingBlockHash      *string  `json:"acceptingBlockHash"`
-	AcceptedBlockHashes     []string `json:"acceptedBlockHashes"`
-	AcceptingBlockBlueScore *uint64  `json:"acceptingBlockBlueScore"`
-	BlueScore               uint64   `json:"blueScore"`
-	IsChainBlock            bool     `json:"isChainBlock"`
-	Mass                    uint64   `json:"mass"`
-	Confirmations           *uint64  `json:"confirmations,omitempty"`
+	BlockHash            string   `json:"blockHash"`
+	Version              uint16   `json:"version"`
+	HashMerkleRoot       string   `json:"hashMerkleRoot"`
+	AcceptedIDMerkleRoot string   `json:"acceptedIDMerkleRoot"`
+	UTXOCommitment       string   `json:"utxoCommitment"`
+	Timestamp            uint64   `json:"timestamp"`
+	Bits                 uint32   `json:"bits"`
+	Nonce                uint64   `json:"nonce"`
+	ParentBlockHashes    []string `json:"parentBlockHashes"`
+	BlueScore            uint64   `json:"blueScore"`
+	TransactionCount     uint16   `json:"transactionCount"`
+	Difficulty           float64  `json:"difficulty"`
+	TransactionIDs       []string `json:"transactionIds"`
 }
 
 // FeeEstimateResponse is a json representation of a fee estimate

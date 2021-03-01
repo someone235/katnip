@@ -13,15 +13,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-func insertBlocks(dbTx *database.TxContext, blocks []*rawAndVerboseBlock, transactionHashesToTxsWithMetadata map[string]*txWithMetadata) error {
+func insertBlocks(dbTx *database.TxContext, blocks []*appmessage.BlockVerboseData) error {
 	blocksToAdd := make([]interface{}, len(blocks))
 	for i, block := range blocks {
-		blockMass := uint64(0)
-		for _, tx := range block.Verbose.TransactionVerboseData {
-			blockMass += transactionHashesToTxsWithMetadata[tx.Hash].mass
-		}
 		var err error
-		blocksToAdd[i], err = dbBlockFromVerboseBlock(block.Verbose, blockMass)
+		blocksToAdd[i], err = dbBlockFromVerboseBlock(block)
 		if err != nil {
 			return err
 		}
@@ -29,15 +25,12 @@ func insertBlocks(dbTx *database.TxContext, blocks []*rawAndVerboseBlock, transa
 	return dbaccess.BulkInsert(dbTx, blocksToAdd)
 }
 
-func getBlocksWithTheirAcceptedBlocksAndParentIDs(dbTx *database.TxContext, blocks []*rawAndVerboseBlock) (map[string]uint64, error) {
+func getBlocksWithTheirParentIDs(dbTx *database.TxContext, blocks []*appmessage.BlockVerboseData) (map[string]uint64, error) {
 	blockSet := make(map[string]struct{})
 	for _, block := range blocks {
-		blockSet[block.hash()] = struct{}{}
-		for _, parentHash := range block.Verbose.ParentHashes {
+		blockSet[block.Hash] = struct{}{}
+		for _, parentHash := range block.ParentHashes {
 			blockSet[parentHash] = struct{}{}
-		}
-		for _, acceptedBlockHash := range block.Verbose.AcceptedBlockHashes {
-			blockSet[acceptedBlockHash] = struct{}{}
 		}
 	}
 
@@ -59,7 +52,30 @@ func getBlocksWithTheirAcceptedBlocksAndParentIDs(dbTx *database.TxContext, bloc
 	return blockHashesToIDs, nil
 }
 
-func dbBlockFromVerboseBlock(verboseBlock *appmessage.BlockVerboseData, mass uint64) (*dbmodels.Block, error) {
+func getNonExistingBlocks(dbTx *database.TxContext, getBlocksResponse *appmessage.GetBlocksResponseMessage) ([]*appmessage.BlockVerboseData, error) {
+	existingBlockHashes, err := dbaccess.ExistingHashes(dbTx, getBlocksResponse.BlockHashes)
+	if err != nil {
+		return nil, err
+	}
+
+	existingBlockHashesSet := make(map[string]struct{}, len(existingBlockHashes))
+	for _, hash := range existingBlockHashes {
+		existingBlockHashesSet[hash] = struct{}{}
+	}
+
+	nonExistingBlocks := make([]*appmessage.BlockVerboseData, 0, len(getBlocksResponse.BlockVerboseData))
+	for _, block := range getBlocksResponse.BlockVerboseData {
+		if _, exists := existingBlockHashesSet[block.Hash]; exists {
+			continue
+		}
+
+		nonExistingBlocks = append(nonExistingBlocks, block)
+	}
+
+	return nonExistingBlocks, nil
+}
+
+func dbBlockFromVerboseBlock(verboseBlock *appmessage.BlockVerboseData) (*dbmodels.Block, error) {
 	bits, err := strconv.ParseUint(verboseBlock.Bits, 16, 32)
 	if err != nil {
 		return nil, err
@@ -76,7 +92,8 @@ func dbBlockFromVerboseBlock(verboseBlock *appmessage.BlockVerboseData, mass uin
 		Nonce:                serializer.Uint64ToBytes(verboseBlock.Nonce),
 		BlueScore:            verboseBlock.BlueScore,
 		IsChainBlock:         false, // This must be false for updateSelectedParentChain to work properly
-		Mass:                 mass,
+		TransactionCount:     uint16(len(verboseBlock.TransactionVerboseData)),
+		Difficulty:           verboseBlock.Difficulty,
 	}
 
 	// Set genesis block as the initial chain block

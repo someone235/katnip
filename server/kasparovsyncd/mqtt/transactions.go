@@ -1,7 +1,6 @@
 package mqtt
 
 import (
-	"github.com/kaspanet/kaspad/app/appmessage"
 	"github.com/kaspanet/kasparov/database"
 	"path"
 
@@ -56,34 +55,6 @@ func uniqueAddressesForTransaction(transaction *apimodels.TransactionResponse) [
 
 func publishTransactionNotificationForAddress(transaction *apimodels.TransactionResponse, address string, topic string) error {
 	return publish(path.Join(topic, address), transaction)
-}
-
-// PublishAcceptedTransactionsNotifications publishes notification for each accepted transaction of the given chain-block
-func PublishAcceptedTransactionsNotifications(addedChainBlocks []*appmessage.ChainBlock) error {
-	if !isConnected() {
-		return nil
-	}
-
-	selectedTipBlueScore, err := dbaccess.SelectedTipBlueScore(database.NoTx())
-	if err != nil {
-		return err
-	}
-
-	for _, addedChainBlock := range addedChainBlocks {
-		for _, acceptedBlock := range addedChainBlock.AcceptedBlocks {
-			dbTransactions, err := dbaccess.TransactionsByIDsAndBlockHash(database.NoTx(), acceptedBlock.AcceptedTxIDs, acceptedBlock.Hash,
-				dbmodels.TransactionRecommendedPreloadedFields...)
-			if err != nil {
-				return err
-			}
-
-			err = publishTransactionsNotifications(AcceptedTransactionsTopic, dbTransactions, selectedTipBlueScore)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
 }
 
 // PublishUnacceptedTransactionsNotifications publishes notification for each unaccepted transaction of the given chain-block

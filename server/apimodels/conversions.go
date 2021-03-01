@@ -2,9 +2,8 @@ package apimodels
 
 import (
 	"encoding/hex"
+	"github.com/kaspanet/kaspad/domain/consensus/utils/subnetworks"
 	"github.com/kaspanet/kaspad/domain/dagconfig"
-	"github.com/kaspanet/kaspad/util/pointers"
-	"github.com/kaspanet/kaspad/util/subnetworkid"
 	"github.com/pkg/errors"
 	"sort"
 
@@ -33,14 +32,13 @@ func ConvertTxModelToTxResponse(tx *dbmodels.Transaction, selectedTipBlueScore u
 		Outputs:         make([]*TransactionOutputResponse, len(tx.TransactionOutputs)),
 		Mass:            tx.Mass,
 		Version:         tx.Version,
-		Raw:             hex.EncodeToString(tx.RawTransaction.TransactionData),
+		Blocks:          make([]*BlockResponse, len(tx.Blocks)),
 	}
 	if tx.AcceptingBlock != nil {
 		txRes.AcceptingBlockHash = &tx.AcceptingBlock.BlockHash
 		txRes.AcceptingBlockBlueScore = &tx.AcceptingBlock.BlueScore
 	}
 
-	txRes.Confirmations = pointers.Uint64(confirmations(txRes.AcceptingBlockBlueScore, selectedTipBlueScore))
 	for i, txOut := range tx.TransactionOutputs {
 		txRes.Outputs[i] = &TransactionOutputResponse{
 			Value:        txOut.Value,
@@ -72,6 +70,10 @@ func ConvertTxModelToTxResponse(tx *dbmodels.Transaction, selectedTipBlueScore u
 		return txRes.Inputs[i].Index < txRes.Inputs[j].Index
 	})
 
+	for i, block := range tx.Blocks {
+		txRes.Blocks[i] = ConvertBlockModelToBlockResponse(&block, selectedTipBlueScore)
+	}
+
 	return txRes
 }
 
@@ -87,22 +89,20 @@ func ConvertBlockModelToBlockResponse(block *dbmodels.Block, selectedTipBlueScor
 		Bits:                 block.Bits,
 		Nonce:                serializer.BytesToUint64(block.Nonce),
 		ParentBlockHashes:    make([]string, len(block.ParentBlocks)),
-		AcceptedBlockHashes:  make([]string, len(block.AcceptedBlocks)),
+		TransactionIDs:       make([]string, len(block.Transactions)),
 		BlueScore:            block.BlueScore,
-		IsChainBlock:         block.IsChainBlock,
-		Mass:                 block.Mass,
+		TransactionCount:     block.TransactionCount,
+		Difficulty:           block.Difficulty,
 	}
-	if block.AcceptingBlock != nil {
-		blockRes.AcceptingBlockHash = &block.AcceptingBlock.BlockHash
-		blockRes.AcceptingBlockBlueScore = &block.AcceptingBlock.BlueScore
-	}
-	blockRes.Confirmations = pointers.Uint64(confirmations(blockRes.AcceptingBlockBlueScore, selectedTipBlueScore))
+
 	for i, parent := range block.ParentBlocks {
 		blockRes.ParentBlockHashes[i] = parent.BlockHash
 	}
-	for i, acceptedBlock := range block.AcceptedBlocks {
-		blockRes.AcceptedBlockHashes[i] = acceptedBlock.BlockHash
+
+	for i, tx := range block.Transactions {
+		blockRes.TransactionIDs[i] = tx.TransactionID
 	}
+
 	return blockRes
 }
 
@@ -111,8 +111,7 @@ func ConvertBlockModelToBlockResponse(block *dbmodels.Block, selectedTipBlueScor
 func ConvertTransactionOutputModelToTransactionOutputResponse(transactionOutput *dbmodels.TransactionOutput,
 	selectedTipBlueScore uint64, activeNetParams *dagconfig.Params, isSpent bool) (*TransactionOutputResponse, error) {
 
-	subnetworkID := &subnetworkid.SubnetworkID{}
-	err := subnetworkid.Decode(subnetworkID, transactionOutput.Transaction.Subnetwork.SubnetworkID)
+	subnetworkID, err := subnetworks.FromString(transactionOutput.Transaction.Subnetwork.SubnetworkID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "couldn't decode subnetwork id %s", transactionOutput.Transaction.Subnetwork.SubnetworkID)
 	}
@@ -122,7 +121,7 @@ func ConvertTransactionOutputModelToTransactionOutputResponse(transactionOutput 
 		acceptingBlockHash = &transactionOutput.Transaction.AcceptingBlock.BlockHash
 		acceptingBlockBlueScore = &transactionOutput.Transaction.AcceptingBlock.BlueScore
 	}
-	isCoinbase := subnetworkID.IsEqual(subnetworkid.SubnetworkIDCoinbase)
+	isCoinbase := subnetworkID.Equal(&subnetworks.SubnetworkIDCoinbase)
 	utxoConfirmations := confirmations(acceptingBlockBlueScore, selectedTipBlueScore)
 
 	isSpendable := false

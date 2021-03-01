@@ -97,11 +97,6 @@ func addRoutes(router *mux.Router) {
 		"/fee-estimates",
 		httpserverutils.MakeHandler(getFeeEstimatesHandler)).
 		Methods("GET")
-
-	router.HandleFunc(
-		"/transaction",
-		httpserverutils.MakeHandler(postTransactionHandler)).
-		Methods("POST")
 }
 
 func convertQueryParamToInt64(queryParams map[string]string, param string, defaultValue int64) (int64, error) {
@@ -201,9 +196,4 @@ func getBlocksHandler(_ *httpserverutils.ServerContext, _ *http.Request, _ map[s
 func getBlockCountHandler(_ *httpserverutils.ServerContext, _ *http.Request, _ map[string]string, _ map[string]string,
 	_ []byte) (interface{}, error) {
 	return controllers.GetBlockCountHandler()
-}
-
-func postTransactionHandler(_ *httpserverutils.ServerContext, _ *http.Request, _ map[string]string, _ map[string]string,
-	requestBody []byte) (interface{}, error) {
-	return nil, controllers.PostTransaction(requestBody)
 }

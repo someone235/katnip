@@ -1,36 +1,32 @@
 package controllers
 
 import (
-	"bytes"
 	"encoding/hex"
-	"encoding/json"
+	"github.com/kaspanet/kaspad/domain/consensus/model/externalapi"
 	"net/http"
 
-	"github.com/kaspanet/kaspad/app/appmessage"
 	"github.com/kaspanet/kasparov/database"
 
 	"github.com/kaspanet/kasparov/apimodels"
 	"github.com/kaspanet/kasparov/dbaccess"
 	"github.com/kaspanet/kasparov/dbmodels"
-	"github.com/kaspanet/kasparov/kaspadrpc"
-
 	"github.com/kaspanet/kasparov/httpserverutils"
 	"github.com/pkg/errors"
-
-	"github.com/kaspanet/kaspad/infrastructure/network/rpcclient"
-	"github.com/kaspanet/kaspad/util/daghash"
 )
 
 const maxGetTransactionsLimit = 1000
 
 // GetTransactionByIDHandler returns a transaction by a given transaction ID.
 func GetTransactionByIDHandler(txID string) (interface{}, error) {
-	if bytes, err := hex.DecodeString(txID); err != nil || len(bytes) != daghash.TxIDSize {
+	if bytes, err := hex.DecodeString(txID); err != nil || len(bytes) != externalapi.DomainHashSize {
 		return nil, httpserverutils.NewHandlerError(http.StatusUnprocessableEntity,
-			errors.Errorf("The given txid is not a hex-encoded %d-byte hash", daghash.TxIDSize))
+			errors.Errorf("The given txid is not a hex-encoded %d-byte hash", externalapi.DomainHashSize))
 	}
 
-	tx, err := dbaccess.TransactionByID(database.NoTx(), txID, dbmodels.TransactionRecommendedPreloadedFields...)
+	preloadedFields := append([]dbmodels.FieldName{dbmodels.TransactionFieldNames.Blocks},
+		dbmodels.TransactionRecommendedPreloadedFields...)
+
+	tx, err := dbaccess.TransactionByID(database.NoTx(), txID, preloadedFields...)
 	if err != nil {
 		return nil, err
 	}
@@ -49,9 +45,9 @@ func GetTransactionByIDHandler(txID string) (interface{}, error) {
 
 // GetTransactionByHashHandler returns a transaction by a given transaction hash.
 func GetTransactionByHashHandler(txHash string) (interface{}, error) {
-	if bytes, err := hex.DecodeString(txHash); err != nil || len(bytes) != daghash.HashSize {
+	if bytes, err := hex.DecodeString(txHash); err != nil || len(bytes) != externalapi.DomainHashSize {
 		return nil, httpserverutils.NewHandlerError(http.StatusUnprocessableEntity,
-			errors.Errorf("The given txhash is not a hex-encoded %d-byte hash", daghash.HashSize))
+			errors.Errorf("The given txhash is not a hex-encoded %d-byte hash", externalapi.DomainHashSize))
 	}
 
 	tx, err := dbaccess.TransactionByHash(database.NoTx(), txHash, dbmodels.TransactionRecommendedPreloadedFields...)
@@ -146,9 +142,9 @@ func GetTransactionsByBlockHashHandler(blockHash string) (interface{}, error) {
 // GetTransactionDoubleSpends returns array of transactions that spend
 // at least one of the same inputs as the given transaction
 func GetTransactionDoubleSpends(txID string) (interface{}, error) {
-	if bytes, err := hex.DecodeString(txID); err != nil || len(bytes) != daghash.TxIDSize {
+	if bytes, err := hex.DecodeString(txID); err != nil || len(bytes) != externalapi.DomainHashSize {
 		return nil, httpserverutils.NewHandlerError(http.StatusUnprocessableEntity,
-			errors.Errorf("The given txid is not a hex-encoded %d-byte hash", daghash.TxIDSize))
+			errors.Errorf("The given txid is not a hex-encoded %d-byte hash", externalapi.DomainHashSize))
 	}
 
 	txs, err := dbaccess.TransactionDoubleSpends(database.NoTx(), txID)
@@ -171,43 +167,3 @@ func GetTransactionDoubleSpends(txID string) (interface{}, error) {
 	}, nil
 }
 
-// PostTransaction forwards a raw transaction to the JSON-RPC API server
-func PostTransaction(requestBody []byte) error {
-	client, err := kaspadrpc.GetClient()
-	if err != nil {
-		return err
-	}
-
-	rawTx := &apimodels.RawTransaction{}
-	err = json.Unmarshal(requestBody, rawTx)
-	if err != nil {
-		return httpserverutils.NewHandlerErrorWithCustomClientMessage(http.StatusUnprocessableEntity,
-			errors.Wrap(err, "error unmarshalling request body"),
-			"the request body is not json-formatted")
-	}
-
-	txBytes, err := hex.DecodeString(rawTx.RawTransaction)
-	if err != nil {
-		return httpserverutils.NewHandlerErrorWithCustomClientMessage(http.StatusUnprocessableEntity,
-			errors.Wrap(err, "error decoding hex raw transaction"),
-			"the raw transaction is not a hex-encoded transaction")
-	}
-
-	txReader := bytes.NewReader(txBytes)
-	tx := &appmessage.MsgTx{}
-	err = tx.KaspaDecode(txReader, 0)
-	if err != nil {
-		return httpserverutils.NewHandlerErrorWithCustomClientMessage(http.StatusUnprocessableEntity,
-			errors.Wrap(err, "error decoding raw transaction"),
-			"error decoding raw transaction")
-	}
-
-	_, err = client.SubmitTransaction(tx)
-	if err != nil {
-		if errors.Is(err, rpcclient.ErrRPC) {
-			return httpserverutils.NewHandlerError(http.StatusUnprocessableEntity, err)
-		}
-		return err
-	}
-	return nil
-}
