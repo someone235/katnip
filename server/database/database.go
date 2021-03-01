@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"github.com/go-pg/pg/v9"
 	"github.com/golang-migrate/migrate/v4/source"
-	"github.com/kaspanet/kasparov/config"
 	"github.com/pkg/errors"
+	"github.com/someone235/katnip/server/config"
 	"os"
 	"strings"
 
 	"github.com/golang-migrate/migrate/v4"
 )
 
-// db is the Kasparov database.
+// db is the Katnip database.
 var db *pg.DB
 
 var (
@@ -32,7 +32,7 @@ func DBInstance() (*pg.DB, error) {
 }
 
 // Connect connects to the database mentioned in the config variable.
-func Connect(cfg *config.KasparovFlags) error {
+func Connect(cfg *config.CommonConfigFlags) error {
 	migrator, driver, err := openMigrator(cfg)
 	if err != nil {
 		return err
@@ -67,7 +67,7 @@ func validateTimeZone(db *pg.DB) error {
 	}
 
 	if _, ok := allowedTimeZones[timeZone]; !ok {
-		return errors.Errorf("to prevent conversion errors - Kasparov should only run with "+
+		return errors.Errorf("to prevent conversion errors - Katnip Server should only run with "+
 			"a database configured to use one of the allowed timezone. Currently configured timezone "+
 			"is %s. Allowed time zones: %s", timeZone, allowedTimezonesString())
 	}
@@ -92,7 +92,7 @@ func Close() error {
 	return err
 }
 
-func buildConnectionString(cfg *config.KasparovFlags) string {
+func buildConnectionString(cfg *config.CommonConfigFlags) string {
 	return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s",
 		cfg.DBUser, cfg.DBPassword, cfg.DBAddress, cfg.DBName, cfg.DBSSLMode)
 }
@@ -123,7 +123,7 @@ func isCurrent(migrator *migrate.Migrate, driver source.Driver) (bool, uint, err
 	return false, version, err
 }
 
-func openMigrator(cfg *config.KasparovFlags) (*migrate.Migrate, source.Driver, error) {
+func openMigrator(cfg *config.CommonConfigFlags) (*migrate.Migrate, source.Driver, error) {
 	driver, err := source.Open("file://../database/migrations")
 	if err != nil {
 		return nil, nil, err
@@ -137,7 +137,7 @@ func openMigrator(cfg *config.KasparovFlags) (*migrate.Migrate, source.Driver, e
 }
 
 // Migrate database to the latest version.
-func Migrate(cfg *config.KasparovFlags) error {
+func Migrate(cfg *config.CommonConfigFlags) error {
 	migrator, driver, err := openMigrator(cfg)
 	if err != nil {
 		return err

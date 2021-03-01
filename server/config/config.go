@@ -6,12 +6,12 @@ import (
 
 	"github.com/jessevdk/go-flags"
 	"github.com/kaspanet/kaspad/infrastructure/config"
-	"github.com/kaspanet/kasparov/logger"
 	"github.com/pkg/errors"
+	"github.com/someone235/katnip/server/logger"
 )
 
-// KasparovFlags holds configuration common to both the Kasparov server and the Kasparov daemon.
-type KasparovFlags struct {
+// CommonConfigFlags holds configuration common to both the server and the sync daemon.
+type CommonConfigFlags struct {
 	ShowVersion bool   `short:"V" long:"version" description:"Display version information and exit"`
 	LogDir      string `long:"logdir" description:"Directory to log output."`
 	DebugLevel  string `short:"d" long:"debuglevel" description:"Set log level {trace, debug, info, warn, error, critical}"`
@@ -25,24 +25,24 @@ type KasparovFlags struct {
 	config.NetworkFlags
 }
 
-// ResolveKasparovFlags parses command line arguments and sets KasparovFlags accordingly.
-func (kasparovFlags *KasparovFlags) ResolveKasparovFlags(parser *flags.Parser,
+// ResolveCommonFlags parses command line arguments and sets CommonConfigFlags accordingly.
+func (commonFlags *CommonConfigFlags) ResolveCommonFlags(parser *flags.Parser,
 	defaultLogDir, logFilename, errLogFilename string, isMigrate bool) error {
-	if kasparovFlags.LogDir == "" {
-		kasparovFlags.LogDir = defaultLogDir
+	if commonFlags.LogDir == "" {
+		commonFlags.LogDir = defaultLogDir
 	}
-	logFile := filepath.Join(kasparovFlags.LogDir, logFilename)
-	errLogFile := filepath.Join(kasparovFlags.LogDir, errLogFilename)
+	logFile := filepath.Join(commonFlags.LogDir, logFilename)
+	errLogFile := filepath.Join(commonFlags.LogDir, errLogFilename)
 	logger.InitLog(logFile, errLogFile)
 
-	if kasparovFlags.DebugLevel != "" {
-		err := logger.SetLogLevels(kasparovFlags.DebugLevel)
+	if commonFlags.DebugLevel != "" {
+		err := logger.SetLogLevels(commonFlags.DebugLevel)
 		if err != nil {
 			return err
 		}
 	}
 
-	if kasparovFlags.RPCServer == "" && !isMigrate {
+	if commonFlags.RPCServer == "" && !isMigrate {
 		return errors.New("--rpcserver is required")
 	}
 
@@ -50,12 +50,12 @@ func (kasparovFlags *KasparovFlags) ResolveKasparovFlags(parser *flags.Parser,
 		return nil
 	}
 
-	if kasparovFlags.Profile != "" {
-		profilePort, err := strconv.Atoi(kasparovFlags.Profile)
+	if commonFlags.Profile != "" {
+		profilePort, err := strconv.Atoi(commonFlags.Profile)
 		if err != nil || profilePort < 1024 || profilePort > 65535 {
 			return errors.New("The profile port must be between 1024 and 65535")
 		}
 	}
 
-	return kasparovFlags.ResolveNetwork(parser)
+	return commonFlags.ResolveNetwork(parser)
 }

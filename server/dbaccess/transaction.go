@@ -5,8 +5,8 @@ import (
 
 	"github.com/go-pg/pg/v9"
 	"github.com/go-pg/pg/v9/orm"
-	"github.com/kaspanet/kasparov/database"
-	"github.com/kaspanet/kasparov/dbmodels"
+	"github.com/someone235/katnip/server/database"
+	"github.com/someone235/katnip/server/dbmodels"
 )
 
 // TransactionByID retrieves a transaction from the database that has the provided ID

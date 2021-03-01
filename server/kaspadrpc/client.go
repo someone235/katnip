@@ -3,7 +3,7 @@ package kaspadrpc
 import (
 	"github.com/kaspanet/kaspad/app/appmessage"
 	"github.com/kaspanet/kaspad/infrastructure/network/rpcclient"
-	"github.com/kaspanet/kasparov/config"
+	"github.com/someone235/katnip/server/config"
 	"time"
 
 	"github.com/pkg/errors"
@@ -30,7 +30,7 @@ func GetClient() (*Client, error) {
 }
 
 // NewClient creates a new Client
-func NewClient(cfg *config.KasparovFlags, subscribeToNotifications bool) (*Client, error) {
+func NewClient(cfg *config.CommonConfigFlags, subscribeToNotifications bool) (*Client, error) {
 	rpcAddress, err := cfg.NetParams().NormalizeRPCServerAddress(cfg.RPCServer)
 	if err != nil {
 		return nil, err

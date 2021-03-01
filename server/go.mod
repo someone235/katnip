@@ -1,4 +1,4 @@
-module github.com/kaspanet/kasparov
+module github.com/someone235/katnip/server
 
 go 1.16
 

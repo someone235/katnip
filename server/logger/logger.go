@@ -34,7 +34,7 @@ func Logger(subsystemTag string) *logger.Logger {
 	return logger
 }
 
-// SetLogLevels sets the logging level for all of the subsystems in Kasparov.
+// SetLogLevels sets the logging level for all of the subsystems in the server.
 func SetLogLevels(level string) error {
 	lvl, ok := logger.LevelFromString(level)
 	if !ok {

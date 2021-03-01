@@ -7,8 +7,8 @@ import (
 	"github.com/pkg/errors"
 	"sort"
 
-	"github.com/kaspanet/kasparov/dbmodels"
-	"github.com/kaspanet/kasparov/serializer"
+	"github.com/someone235/katnip/server/dbmodels"
+	"github.com/someone235/katnip/server/serializer"
 )
 
 func confirmations(acceptingBlockBlueScore *uint64, selectedTipBlueScore uint64) uint64 {

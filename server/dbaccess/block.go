@@ -3,9 +3,9 @@ package dbaccess
 import (
 	"fmt"
 	"github.com/go-pg/pg/v9"
-	"github.com/kaspanet/kasparov/database"
+	"github.com/someone235/katnip/server/database"
 
-	"github.com/kaspanet/kasparov/dbmodels"
+	"github.com/someone235/katnip/server/dbmodels"
 )
 
 // BlockByHash retrieves a block from the database according to its hash
@@ -152,7 +152,7 @@ func SelectedTipBlueScore(ctx database.Context) (uint64, error) {
 
 // BluestBlock fetches the block with the highest blue score from the database
 // Note: this is not necessarily the same as SelectedTip(): In a non-fully synced
-// Kasparov - chain is still partial, and therefore SelectedTip() returns a lower
+// server - chain is still partial, and therefore SelectedTip() returns a lower
 // block.
 func BluestBlock(ctx database.Context) (*dbmodels.Block, error) {
 	db, err := ctx.DB()

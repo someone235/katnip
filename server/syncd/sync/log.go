@@ -1,9 +1,9 @@
-package httpserverutils
+package sync
 
 import (
 	"github.com/someone235/katnip/server/logger"
 )
 
 var (
-	log = logger.BackendLog.Logger("UTIL")
+	log = logger.Logger("SYNC")
 )
