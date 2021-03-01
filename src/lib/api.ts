@@ -1,7 +1,4 @@
-import process from 'process'
-
-console.log('aaaaaaaaaaa', process.env.REACT_APP_API_HOST)
-const baseEndpoint = process.env.REACT_APP_API_HOST || 'http://localhost:8080/'
+const baseEndpoint = process.env.REACT_APP_API_URI || 'http://localhost:8080/'
 
 export function getBlocks(): Promise<Array<ApiBlock>> {
     return apiCall(`blocks?limit=10`);
