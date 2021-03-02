@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {makeStyles} from '@material-ui/core/styles';
+import {makeStyles, useTheme} from '@material-ui/core/styles';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
@@ -39,7 +39,7 @@ export default function TxPage() {
         <Box>
             <Tx tx={tx}/>
             <RecipientAddresses addresses={recipientAddresses}/>
-            {fromAddresses.length !== 0 ? <FromAddresses addresses={fromAddresses}/> : undefined}
+            {<FromAddresses addresses={fromAddresses}/>}
             <IncludingBlocks blocks={tx.blocks}/>
         </Box>
     );
@@ -85,6 +85,7 @@ function Tx({tx}: { tx: ApiTx }) {
     const totalOutput = tx.outputs.reduce((sum, output) => sum + output.value, 0) / unitsInKas;
 
     const isCoinbase = tx.inputs.length === 0;
+    const hasUnknownPrevOuts = tx.inputs.some(input => input.hasKnownPreviousOutput);
     const fee = isCoinbase ? 0 : totalInput - totalOutput
 
     return (
@@ -105,7 +106,7 @@ function Tx({tx}: { tx: ApiTx }) {
                     <TableRow>
                         <TableCell variant="head">Total Input</TableCell>
                         <TableCell>
-                            {totalInput} KAS
+                            {hasUnknownPrevOuts ? 'Cannot calculate total input because some of the previous UTXOs are pruned' : totalInput + ' KAS'}
                         </TableCell>
                     </TableRow>
                     <TableRow>
@@ -116,7 +117,9 @@ function Tx({tx}: { tx: ApiTx }) {
                     </TableRow>
                     <TableRow>
                         <TableCell variant="head">Fees</TableCell>
-                        <TableCell>{fee}</TableCell>
+                        <TableCell>
+                            {hasUnknownPrevOuts ? 'Cannot calculate total input because some of the previous UTXOs are pruned' : fee.toFixed(8) + ' KAS'}
+                        </TableCell>
                     </TableRow>
                     <TableRow>
                         <TableCell variant="head">Number of Inputs</TableCell>
@@ -135,6 +138,7 @@ function Tx({tx}: { tx: ApiTx }) {
 function RecipientAddresses({addresses}: { addresses: Array<string> }) {
     const classes = useStyles();
 
+    const uniqueAddresses = Array.from(new Set(addresses));
     return (
         <Box my={4}>
             <Typography variant="h6" component="h1" gutterBottom>
@@ -155,25 +159,43 @@ function RecipientAddresses({addresses}: { addresses: Array<string> }) {
     );
 }
 
-function FromAddresses({addresses}: { addresses: Array<string> }) {
-    const classes = useStyles();
+function NoFromAddresses() {
+    const theme = useTheme();
 
+    return <Box style={{backgroundColor: theme.palette.background.paper}} padding={1}>
+        <Typography>
+            No from addresses
+        </Typography>
+    </Box>
+}
+
+function FromAddresses({addresses}: { addresses: Array<string> }) {
     return (
         <Box my={4}>
             <Typography variant="h6" component="h1" gutterBottom>
                 From Addresses
             </Typography>
-            <TableContainer component={Paper}>
-                <Table className={classes.table} aria-label="From Addresses">
-                    {addresses.map(address =>
-                        <TableRow key={address}>
-                            <TableCell><Link
-                                href="#"
-                                color="textSecondary">{address}</Link></TableCell>
-                        </TableRow>
-                    )}
-                </Table>
-            </TableContainer>
+            {addresses.length == 0 ? <NoFromAddresses/> : <FromAddressesTable addresses={addresses}/>}
         </Box>
+    );
+}
+
+function FromAddressesTable({addresses}: { addresses: Array<string> }) {
+    const classes = useStyles();
+
+    const uniqueAddresses = Array.from(new Set(addresses));
+
+    return (
+        <TableContainer component={Paper}>
+            <Table className={classes.table} aria-label="From Addresses">
+                {uniqueAddresses.map(address =>
+                    <TableRow key={address}>
+                        <TableCell><Link
+                            href="#"
+                            color="textSecondary">{address}</Link></TableCell>
+                    </TableRow>
+                )}
+            </Table>
+        </TableContainer>
     );
 }

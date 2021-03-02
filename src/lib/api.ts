@@ -30,6 +30,7 @@ export interface ApiTx {
     inputs: Array<{
         value: number
         address: string
+        hasKnownPreviousOutput: boolean
     }>
     blocks: Array<ApiBlock>
 }

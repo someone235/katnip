@@ -7,7 +7,6 @@ import (
 	"github.com/someone235/katnip/server/database"
 	"github.com/someone235/katnip/server/serializer"
 
-	"github.com/pkg/errors"
 	"github.com/someone235/katnip/server/dbaccess"
 	"github.com/someone235/katnip/server/dbmodels"
 )
@@ -57,7 +56,7 @@ func insertTransactionInputs(dbTx *database.TxContext, transactionHashesToTxsWit
 	}
 
 	if len(dbPreviousTransactionsOutputs) != len(outpoints) {
-		return errors.New("couldn't fetch all of the requested outpoints")
+		log.Debugf("couldn't fetch all of the requested outpoints")
 	}
 
 	outpointsToIDs := make(map[dbaccess.Outpoint]uint64)
@@ -76,20 +75,24 @@ func insertTransactionInputs(dbTx *database.TxContext, transactionHashesToTxsWit
 			if err != nil {
 				return nil
 			}
+			dbTransactionInput := &dbmodels.TransactionInput{
+				TransactionID:                  transaction.id,
+				PreviousTransactionOutputIndex: txIn.OutputIndex,
+				PreviousTransactionID:          txIn.TxID,
+				Index:                          uint32(i),
+				SignatureScript:                scriptSig,
+				Sequence:                       serializer.Uint64ToBytes(txIn.Sequence),
+			}
+
 			prevOutputID, ok := outpointsToIDs[dbaccess.Outpoint{
 				TransactionID: txIn.TxID,
 				Index:         txIn.OutputIndex,
 			}]
-			if !ok || prevOutputID == 0 {
-				return errors.Errorf("couldn't find ID for outpoint (%s:%d)", txIn.TxID, txIn.OutputIndex)
+			if ok && prevOutputID != 0 {
+				dbTransactionInput.PreviousTransactionOutputID = prevOutputID
 			}
-			inputsToAdd[inputIndex] = &dbmodels.TransactionInput{
-				TransactionID:               transaction.id,
-				PreviousTransactionOutputID: prevOutputID,
-				Index:                       uint32(i),
-				SignatureScript:             scriptSig,
-				Sequence:                    serializer.Uint64ToBytes(txIn.Sequence),
-			}
+
+			inputsToAdd[inputIndex] = dbTransactionInput
 			inputIndex++
 		}
 	}

@@ -61,9 +61,13 @@ func ConvertTxModelToTxResponse(tx *dbmodels.Transaction, selectedTipBlueScore u
 			SignatureScript:                hex.EncodeToString(txIn.SignatureScript),
 			Sequence:                       serializer.BytesToUint64(txIn.Sequence),
 			Index:                          txIn.Index,
+			HasKnownPreviousOutput:         txIn.PreviousTransactionOutput != nil,
 		}
-		if txIn.PreviousTransactionOutput.Address != nil {
-			txRes.Inputs[i].Address = txIn.PreviousTransactionOutput.Address.Address
+		if txIn.PreviousTransactionOutput != nil {
+			if txIn.PreviousTransactionOutput.Address != nil {
+				txRes.Inputs[i].Address = txIn.PreviousTransactionOutput.Address.Address
+			}
+			txRes.Inputs[i].Value = txIn.PreviousTransactionOutput.Value
 		}
 	}
 	sort.Slice(txRes.Inputs, func(i, j int) bool {

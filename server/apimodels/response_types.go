@@ -41,7 +41,9 @@ type TransactionInputResponse struct {
 	SignatureScript                string `json:"signatureScript"`
 	Sequence                       uint64 `json:"sequence"`
 	Address                        string `json:"address"`
+	Value                          uint64 `json:"value"`
 	Index                          uint32 `json:"index"`
+	HasKnownPreviousOutput         bool   `json:"hasKnownPreviousOutput"`
 }
 
 // TransactionsResponse is a json representation of a transactions response

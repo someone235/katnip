@@ -14,7 +14,7 @@ import (
 type CommonConfigFlags struct {
 	ShowVersion bool   `short:"V" long:"version" description:"Display version information and exit"`
 	LogDir      string `long:"logdir" description:"Directory to log output."`
-	DebugLevel  string `short:"d" long:"debuglevel" description:"Set log level {trace, debug, info, warn, error, critical}"`
+	DebugLevel  string `short:"d" long:"debuglevel" description:"Set log level {trace, debug, info, warn, error, critical}"  default:"info"`
 	DBAddress   string `long:"dbaddress" description:"Database address" default:"localhost:5432"`
 	DBSSLMode   string `long:"dbsslmode" description:"Database SSL mode" choice:"disable" choice:"allow" choice:"prefer" choice:"require" choice:"verify-ca" choice:"verify-full" default:"disable"`
 	DBUser      string `long:"dbuser" description:"Database user" required:"true"`
@@ -35,11 +35,9 @@ func (commonFlags *CommonConfigFlags) ResolveCommonFlags(parser *flags.Parser,
 	errLogFile := filepath.Join(commonFlags.LogDir, errLogFilename)
 	logger.InitLog(logFile, errLogFile)
 
-	if commonFlags.DebugLevel != "" {
-		err := logger.SetLogLevels(commonFlags.DebugLevel)
-		if err != nil {
-			return err
-		}
+	err := logger.SetLogLevels(commonFlags.DebugLevel)
+	if err != nil {
+		return err
 	}
 
 	if commonFlags.RPCServer == "" && !isMigrate {

@@ -124,7 +124,7 @@ func isCurrent(migrator *migrate.Migrate, driver source.Driver) (bool, uint, err
 }
 
 func openMigrator(cfg *config.CommonConfigFlags) (*migrate.Migrate, source.Driver, error) {
-	driver, err := source.Open("file://../database/migrations")
+	driver, err := source.Open("file://./database/migrations")
 	if err != nil {
 		return nil, nil, err
 	}

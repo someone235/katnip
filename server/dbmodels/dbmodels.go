@@ -208,14 +208,16 @@ var TransactionOutputFieldNames = struct {
 
 // TransactionInput is the database model for the 'transaction_inputs' table
 type TransactionInput struct {
-	ID                          uint64 `pg:",pk"`
-	TransactionID               uint64 `pg:",use_zero"`
-	Transaction                 Transaction
-	PreviousTransactionOutputID uint64 `pg:",use_zero"`
-	PreviousTransactionOutput   TransactionOutput
-	Index                       uint32 `pg:",use_zero"`
-	SignatureScript             []byte `pg:",use_zero"`
-	Sequence                    []byte `pg:",use_zero"`
+	ID                             uint64 `pg:",pk"`
+	TransactionID                  uint64 `pg:",use_zero"`
+	Transaction                    Transaction
+	PreviousTransactionOutputID    uint64 `pg:",use_zero"`
+	PreviousTransactionOutputIndex uint32 `pg:",use_zero"`
+	PreviousTransactionID          string `pg:",use_zero"`
+	PreviousTransactionOutput      *TransactionOutput
+	Index                          uint32 `pg:",use_zero"`
+	SignatureScript                []byte `pg:",use_zero"`
+	Sequence                       []byte `pg:",use_zero"`
 }
 
 // TransactionInputFieldNames is a list of FieldNames for the 'TransactionInput' object

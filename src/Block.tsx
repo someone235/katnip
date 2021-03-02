@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {makeStyles} from '@material-ui/core/styles';
+import {makeStyles, useTheme} from '@material-ui/core/styles';
 import Table from '@material-ui/core/Table';
 import TableCell from '@material-ui/core/TableCell';
 import TableContainer from '@material-ui/core/TableContainer';
@@ -66,25 +66,42 @@ function Parents({parents}: { parents: Array<string> }) {
 }
 
 function Transactions({transactionIds}: { transactionIds: Array<string> }) {
-    const classes = useStyles();
-
     return (
         <Box my={4}>
             <Typography variant="h6" component="h1" gutterBottom>
                 Block Transactions
             </Typography>
-            <TableContainer component={Paper}>
-                <Table className={classes.table} aria-label="Transactions">
-                    {transactionIds.map(txId =>
-                        <TableRow key={txId}>
-                            <TableCell><Link
-                                href={"#/tx/" + txId}
-                                color="textSecondary">{txId}</Link></TableCell>
-                        </TableRow>
-                    )}
-                </Table>
-            </TableContainer>
+            {transactionIds.length == 0 ? <PrunedBlockMessage/> : <TransactionsTable transactionIds={transactionIds}/>}
         </Box>
+    );
+}
+
+function PrunedBlockMessage() {
+    const theme = useTheme();
+    return (
+        <Box style={{backgroundColor: theme.palette.background.paper}} padding={1}>
+            <Typography>
+                Cannot show transactions for pruned or header only block
+            </Typography>
+        </Box>
+    );
+}
+
+function TransactionsTable({transactionIds}: { transactionIds: Array<string> }) {
+    const classes = useStyles();
+
+    return (
+        <TableContainer component={Paper}>
+            <Table className={classes.table} aria-label="Transactions">
+                {transactionIds.map(txId =>
+                    <TableRow key={txId}>
+                        <TableCell><Link
+                            href={"#/tx/" + txId}
+                            color="textSecondary">{txId}</Link></TableCell>
+                    </TableRow>
+                )}
+            </Table>
+        </TableContainer>
     );
 }
 

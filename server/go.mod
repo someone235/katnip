@@ -12,3 +12,5 @@ require (
 	github.com/kaspanet/kaspad v0.8.10
 	github.com/pkg/errors v0.9.1
 )
+
+replace github.com/kaspanet/kaspad => ../../../kaspanet/kaspad

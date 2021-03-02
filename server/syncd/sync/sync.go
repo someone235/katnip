@@ -61,19 +61,19 @@ func sync(client *kaspadrpc.Client, doneChan chan struct{}) error {
 // syncBlocks attempts to download all DAG blocks starting with
 // the bluest block, and then inserts them into the database.
 func syncBlocks(client *kaspadrpc.Client) error {
-	// Start syncing from the bluest block hash. We use blue score to
-	// simulate the "last" block we have because blue-block order is
-	// the order that the node uses in the various JSONRPC calls.
-	startBlock, err := dbaccess.BluestBlock(database.NoTx())
-	if err != nil {
-		return err
-	}
-	var startHash string
-	if startBlock != nil {
-		startHash = startBlock.BlockHash
-	}
-
 	for {
+		// Start syncing from the bluest block hash. We use blue score to
+		// simulate the "last" block we have because blue-block order is
+		// the order that the node uses in the various JSONRPC calls.
+		startBlock, err := dbaccess.BluestBlock(database.NoTx())
+		if err != nil {
+			return err
+		}
+		var startHash string
+		if startBlock != nil {
+			startHash = startBlock.BlockHash
+		}
+
 		if startHash != "" {
 			log.Debugf("Calling getBlocks with start hash %s", startHash)
 		} else {
@@ -88,7 +88,6 @@ func syncBlocks(client *kaspadrpc.Client) error {
 		}
 		log.Debugf("Got %d blocks", len(blocksResult.BlockHashes))
 
-		startHash = blocksResult.BlockHashes[len(blocksResult.BlockHashes)-1]
 		err = addBlocks(client, blocksResult)
 		if err != nil {
 			return err
