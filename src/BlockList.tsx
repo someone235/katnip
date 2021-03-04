@@ -33,11 +33,11 @@ export default function BlockList() {
             <Table className={classes.table} aria-label="Block list">
                 <TableHead>
                     <TableRow>
-                        <TableCell align={"center"}>Hash</TableCell>
+                        <TableCell align={"center"}>Block Hash</TableCell>
                         <TableCell align={"center"}>Blue Score</TableCell>
                         <TableCell align={"center"}>Timestamp</TableCell>
                         <TableCell align={"center"}>Transactions</TableCell>
-                        <TableCell  align={"center"} style={{maxWidth: "50px"}}>Number of parents</TableCell>
+                        <TableCell align={"center"}>Parent Count</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
@@ -45,8 +45,10 @@ export default function BlockList() {
                         const date = new Date(block.timestamp * 1000);
                         const dateStr = date.toLocaleString();
                         return <TableRow key={block.blockHash}>
-                            <TableCell  align={"center"} component="th" scope="row" style={{width: 50}}>
-                                < Link color="textSecondary" href={`#block/${block.blockHash}`}>{block.blockHash.substr(0, 32)}...</Link>
+                            <TableCell align={"center"} component="th" scope="row" style={{width: 50}}>
+                                <Link color="textSecondary"
+                                      style={{fontFamily: 'monospace', fontSize: 14}}
+                                      href={`#block/${block.blockHash}`}>{block.blockHash}</Link>
                             </TableCell>
                             <TableCell align={"center"}>{block.blueScore}</TableCell>
                             <TableCell align={"center"}>{dateStr}</TableCell>

@@ -30,7 +30,10 @@ export default function App() {
             <Container maxWidth="lg">
                 <Box my={4}>
                     <Typography variant="h4" component="h1" gutterBottom>
-                        <Link href={"/"}><img alt={""} src={"/img/Phoenician_kaph.svg"}/></Link> Katnip - Kaspa Block
+                        <Link href={"/"}><img style={{
+                            width: 50,
+                            height: 50,
+                        }} alt={""} src={"/img/Phoenician_kaph.svg"}/></Link> Katnip - Kaspa Block
                         Explorer
                     </Typography>
                     <Search/>

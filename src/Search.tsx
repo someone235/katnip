@@ -13,21 +13,27 @@ export default function Search() {
     }
 
     return <Box my={4} style={{
-        width: '80%',
+        width: '100%',
         minWidth: '350px',
-        backgroundColor: "grey"
+        backgroundColor: "grey",
+        borderRadius: 25,
     }}>
         <form noValidate autoComplete="off" onSubmit={handleSubmit}>
-            <TextField onChange={e => setSearch(e.target.value)} style={{
-                width: '100%'
-            }}
-                       InputLabelProps={{
-                           style: {marginLeft: 10, color: 'white'}
-                       }}
-                       id="standard-basic" label="Search for block hash or transaction ID" InputProps={{
+            <TextField
+                onChange={e => setSearch(e.target.value)}
+                style={{
+                    width: '100%',
+                    paddingLeft: 20,
+                    height: 30,
+                }}
+                id="standard-basic" placeholder="Search for block hash or transaction ID" InputProps={{
+                disableUnderline: true,
                 endAdornment: (
                     <InputAdornment position="start">
-                        <SearchIcon style={{cursor: 'pointer'}} onClick={handleSubmit}/>
+                        <SearchIcon style={{
+                            cursor: 'pointer',
+                            marginRight: 10,
+                        }} onClick={handleSubmit}/>
                     </InputAdornment>
                 ),
             }}/>

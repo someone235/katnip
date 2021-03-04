@@ -85,7 +85,7 @@ function Tx({tx}: { tx: ApiTx }) {
     const totalOutput = tx.outputs.reduce((sum, output) => sum + output.value, 0) / unitsInKas;
 
     const isCoinbase = tx.inputs.length === 0;
-    const hasUnknownPrevOuts = tx.inputs.some(input => input.hasKnownPreviousOutput);
+    const hasUnknownPrevOuts = tx.inputs.some(input => !input.hasKnownPreviousOutput);
     const fee = isCoinbase ? 0 : totalInput - totalOutput
 
     return (
@@ -118,7 +118,7 @@ function Tx({tx}: { tx: ApiTx }) {
                     <TableRow>
                         <TableCell variant="head">Fees</TableCell>
                         <TableCell>
-                            {hasUnknownPrevOuts ? 'Cannot calculate total input because some of the previous UTXOs are pruned' : fee.toFixed(8) + ' KAS'}
+                            {hasUnknownPrevOuts ? 'Cannot calculate fee because some of the previous UTXOs are pruned' : fee.toFixed(8) + ' KAS'}
                         </TableCell>
                     </TableRow>
                     <TableRow>
