@@ -56,8 +56,8 @@ func ConvertTxModelToTxResponse(tx *dbmodels.Transaction, selectedTipBlueScore u
 
 	for i, txIn := range tx.TransactionInputs {
 		txRes.Inputs[i] = &TransactionInputResponse{
-			PreviousTransactionID:          txIn.PreviousTransactionOutput.Transaction.TransactionID,
-			PreviousTransactionOutputIndex: txIn.PreviousTransactionOutput.Index,
+			PreviousTransactionID:          txIn.PreviousTransactionID,
+			PreviousTransactionOutputIndex: txIn.PreviousTransactionOutputIndex,
 			SignatureScript:                hex.EncodeToString(txIn.SignatureScript),
 			Sequence:                       serializer.BytesToUint64(txIn.Sequence),
 			Index:                          txIn.Index,
