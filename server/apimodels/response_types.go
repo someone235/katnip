@@ -9,7 +9,6 @@ type TransactionResponse struct {
 	SubnetworkID            string                       `json:"subnetworkId"`
 	LockTime                uint64                       `json:"lockTime"`
 	Gas                     uint64                       `json:"gas,omitempty"`
-	PayloadHash             string                       `json:"payloadHash,omitempty"`
 	Payload                 string                       `json:"payload,omitempty"`
 	Inputs                  []*TransactionInputResponse  `json:"inputs"`
 	Outputs                 []*TransactionOutputResponse `json:"outputs"`

@@ -5,13 +5,12 @@ import (
 	"github.com/kaspanet/kaspad/app/appmessage"
 	"github.com/kaspanet/kaspad/domain/consensus/model/externalapi"
 	"github.com/kaspanet/kaspad/domain/consensus/utils/subnetworks"
+	"github.com/kaspanet/kaspad/infrastructure/logger"
+	"github.com/pkg/errors"
 	"github.com/someone235/katnip/server/database"
-	"github.com/someone235/katnip/server/serializer"
-
 	"github.com/someone235/katnip/server/dbaccess"
 	"github.com/someone235/katnip/server/dbmodels"
-
-	"github.com/pkg/errors"
+	"github.com/someone235/katnip/server/serializer"
 )
 
 type txWithMetadata struct {
@@ -32,6 +31,9 @@ func transactionHashesToTxsWithMetadataToTransactionHashes(transactionHashesToTx
 
 func insertTransactions(dbTx *database.TxContext, blocks []*appmessage.BlockVerboseData, subnetworkIDsToIDs map[string]uint64) (
 	map[string]*txWithMetadata, error) {
+
+	onEnd := logger.LogAndMeasureExecutionTime(log, "insertTransactions")
+	defer onEnd()
 
 	transactionHashesToTxsWithMetadata := make(map[string]*txWithMetadata)
 	for _, block := range blocks {
@@ -84,7 +86,6 @@ func insertTransactions(dbTx *database.TxContext, blocks []*appmessage.BlockVerb
 			LockTime:        serializer.Uint64ToBytes(verboseTx.LockTime),
 			SubnetworkID:    subnetworkID,
 			Gas:             verboseTx.Gas,
-			PayloadHash:     verboseTx.PayloadHash,
 			Payload:         payload,
 			Version:         verboseTx.Version,
 		}

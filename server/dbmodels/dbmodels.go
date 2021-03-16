@@ -110,7 +110,6 @@ type Transaction struct {
 	SubnetworkID       uint64 `pg:",use_zero"`
 	Subnetwork         Subnetwork
 	Gas                uint64  `pg:",use_zero"`
-	PayloadHash        string  `pg:",use_zero"`
 	Payload            []byte  `pg:",use_zero"`
 	Mass               uint64  `pg:",use_zero"`
 	Version            uint16  `pg:",use_zero"`

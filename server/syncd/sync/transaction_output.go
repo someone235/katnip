@@ -2,6 +2,7 @@ package sync
 
 import (
 	"encoding/hex"
+	"github.com/kaspanet/kaspad/infrastructure/logger"
 	"github.com/someone235/katnip/server/database"
 
 	"github.com/pkg/errors"
@@ -10,6 +11,9 @@ import (
 )
 
 func insertTransactionOutputs(dbTx *database.TxContext, transactionHashesToTxsWithMetadata map[string]*txWithMetadata) error {
+	onEnd := logger.LogAndMeasureExecutionTime(log, "insertTransactionOutputs")
+	defer onEnd()
+
 	addressesToAddressIDs, err := insertAddresses(dbTx, transactionHashesToTxsWithMetadata)
 	if err != nil {
 		return err

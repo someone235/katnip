@@ -26,7 +26,6 @@ func ConvertTxModelToTxResponse(tx *dbmodels.Transaction, selectedTipBlueScore u
 		SubnetworkID:    tx.Subnetwork.SubnetworkID,
 		LockTime:        serializer.BytesToUint64(tx.LockTime),
 		Gas:             tx.Gas,
-		PayloadHash:     tx.PayloadHash,
 		Payload:         hex.EncodeToString(tx.Payload),
 		Inputs:          make([]*TransactionInputResponse, len(tx.TransactionInputs)),
 		Outputs:         make([]*TransactionOutputResponse, len(tx.TransactionOutputs)),

@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"github.com/kaspanet/kaspad/app/appmessage"
 	"github.com/kaspanet/kaspad/domain/consensus/utils/subnetworks"
+	"github.com/kaspanet/kaspad/infrastructure/logger"
 	"github.com/someone235/katnip/server/database"
 	"github.com/someone235/katnip/server/serializer"
 
@@ -12,6 +13,9 @@ import (
 )
 
 func insertTransactionInputs(dbTx *database.TxContext, transactionHashesToTxsWithMetadata map[string]*txWithMetadata) error {
+	onEnd := logger.LogAndMeasureExecutionTime(log, "insertTransactionInputs")
+	defer onEnd()
+
 	outpointsSet := make(map[dbaccess.Outpoint]struct{})
 	newNonCoinbaseTransactions := make(map[string]*txWithMetadata)
 	inputsCount := 0

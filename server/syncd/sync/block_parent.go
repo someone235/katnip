@@ -2,6 +2,7 @@ package sync
 
 import (
 	"github.com/kaspanet/kaspad/app/appmessage"
+	"github.com/kaspanet/kaspad/infrastructure/logger"
 	"github.com/someone235/katnip/server/database"
 	"github.com/someone235/katnip/server/dbaccess"
 	"github.com/someone235/katnip/server/dbmodels"
@@ -10,6 +11,9 @@ import (
 )
 
 func insertBlockParents(dbTx *database.TxContext, blocks []*appmessage.BlockVerboseData, blockHashesToIDs map[string]uint64) error {
+	onEnd := logger.LogAndMeasureExecutionTime(log, "insertBlockParents")
+	defer onEnd()
+
 	parentsToAdd := make([]interface{}, 0)
 	for _, block := range blocks {
 		dbBlockParents, err := dbParentBlocksFromVerboseBlock(blockHashesToIDs, block)

@@ -2,6 +2,7 @@ package sync
 
 import (
 	"github.com/kaspanet/kaspad/app/appmessage"
+	"github.com/kaspanet/kaspad/infrastructure/logger"
 	"strconv"
 
 	"github.com/kaspanet/kaspad/util/mstime"
@@ -14,6 +15,9 @@ import (
 )
 
 func insertBlocks(dbTx *database.TxContext, blocks []*appmessage.BlockVerboseData) error {
+	onEnd := logger.LogAndMeasureExecutionTime(log, "insertBlocks")
+	defer onEnd()
+
 	blocksToAdd := make([]interface{}, len(blocks))
 	for i, block := range blocks {
 		var err error
@@ -26,6 +30,9 @@ func insertBlocks(dbTx *database.TxContext, blocks []*appmessage.BlockVerboseDat
 }
 
 func getBlocksWithTheirParentIDs(dbTx *database.TxContext, blocks []*appmessage.BlockVerboseData) (map[string]uint64, error) {
+	onEnd := logger.LogAndMeasureExecutionTime(log, "getBlocksWithTheirParentIDs")
+	defer onEnd()
+
 	blockSet := make(map[string]struct{})
 	for _, block := range blocks {
 		blockSet[block.Hash] = struct{}{}
@@ -41,8 +48,18 @@ func getBlocksWithTheirParentIDs(dbTx *database.TxContext, blocks []*appmessage.
 		return nil, err
 	}
 
-	if len(dbBlocks) != len(blockSet) {
-		return nil, errors.Errorf("couldn't retrieve all block IDs")
+	if len(dbBlocks) != len(blockHashes) {
+		for _, hash := range blockHashes {
+			block, err := dbaccess.BlockByHash(dbTx, hash)
+			if err != nil {
+				return nil, err
+			}
+
+			if block == nil {
+				return nil, errors.Errorf("couldn't retrieve block %s", hash)
+			}
+		}
+		return nil, errors.Errorf("couldn't find the missing block")
 	}
 
 	blockHashesToIDs := make(map[string]uint64)

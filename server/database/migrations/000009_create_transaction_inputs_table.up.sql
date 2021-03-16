@@ -16,5 +16,6 @@ CREATE TABLE transaction_inputs
 
 CREATE
 INDEX idx_transaction_inputs_transaction_id ON transaction_inputs (transaction_id);
+
 CREATE
 INDEX idx_transaction_inputs_previous_transaction_output_id ON transaction_inputs (previous_transaction_output_id);

@@ -2,6 +2,7 @@ package sync
 
 import (
 	"github.com/kaspanet/kaspad/app/appmessage"
+	"github.com/kaspanet/kaspad/infrastructure/logger"
 	"github.com/someone235/katnip/server/database"
 	"github.com/someone235/katnip/server/dbaccess"
 	"github.com/someone235/katnip/server/dbmodels"
@@ -12,6 +13,9 @@ import (
 
 func insertSubnetworks(client *kaspadrpc.Client, dbTx *database.TxContext, verboseBlocks []*appmessage.BlockVerboseData) (
 	subnetworkIDsToIDs map[string]uint64, err error) {
+
+	onEnd := logger.LogAndMeasureExecutionTime(log, "insertSubnetworks")
+	defer onEnd()
 
 	subnetworkSet := make(map[string]struct{})
 	for _, block := range verboseBlocks {
