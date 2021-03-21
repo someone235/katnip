@@ -19,7 +19,7 @@ const (
 
 var (
 	// Default configuration options
-	defaultLogDir     = util.AppDataDir("serverd", false)
+	defaultLogDir     = util.AppDir("serverd", false)
 	defaultHTTPListen = "0.0.0.0:8080"
 	activeConfig      *Config
 )
