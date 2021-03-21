@@ -20,7 +20,7 @@ const (
 
 var (
 	// Default configuration options
-	defaultLogDir = util.AppDataDir("katnip_syncd", false)
+	defaultLogDir = util.AppDir("katnip_syncd", false)
 	activeConfig  *Config
 )
 
