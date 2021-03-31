@@ -23,7 +23,7 @@ func insertTransactionInputs(dbTx *database.TxContext, transactionHashesToTxsWit
 		if !transaction.isNew {
 			continue
 		}
-		isCoinbase, err := isTransactionCoinbase(transaction.verboseTx)
+		isCoinbase, err := isTransactionCoinbase(transaction.tx)
 		if err != nil {
 			return err
 		}
@@ -32,12 +32,12 @@ func insertTransactionInputs(dbTx *database.TxContext, transactionHashesToTxsWit
 		}
 
 		newNonCoinbaseTransactions[txHash] = transaction
-		inputsCount += len(transaction.verboseTx.TransactionVerboseInputs)
-		for i := range transaction.verboseTx.TransactionVerboseInputs {
-			txIn := transaction.verboseTx.TransactionVerboseInputs[i]
+		inputsCount += len(transaction.tx.Inputs)
+		for i := range transaction.tx.Inputs {
+			txIn := transaction.tx.Inputs[i]
 			outpoint := dbaccess.Outpoint{
-				TransactionID: txIn.TxID,
-				Index:         txIn.OutputIndex,
+				TransactionID: txIn.PreviousOutpoint.TransactionID,
+				Index:         txIn.PreviousOutpoint.Index,
 			}
 			outpointsSet[outpoint] = struct{}{}
 		}
@@ -74,23 +74,23 @@ func insertTransactionInputs(dbTx *database.TxContext, transactionHashesToTxsWit
 	inputsToAdd := make([]interface{}, inputsCount)
 	inputIndex := 0
 	for _, transaction := range newNonCoinbaseTransactions {
-		for i, txIn := range transaction.verboseTx.TransactionVerboseInputs {
-			scriptSig, err := hex.DecodeString(txIn.ScriptSig.Hex)
+		for i, txIn := range transaction.tx.Inputs {
+			scriptSig, err := hex.DecodeString(txIn.SignatureScript)
 			if err != nil {
 				return nil
 			}
 			dbTransactionInput := &dbmodels.TransactionInput{
 				TransactionID:                  transaction.id,
-				PreviousTransactionOutputIndex: txIn.OutputIndex,
-				PreviousTransactionID:          txIn.TxID,
+				PreviousTransactionID:          txIn.PreviousOutpoint.TransactionID,
+				PreviousTransactionOutputIndex: txIn.PreviousOutpoint.Index,
 				Index:                          uint32(i),
 				SignatureScript:                scriptSig,
 				Sequence:                       serializer.Uint64ToBytes(txIn.Sequence),
 			}
 
 			prevOutputID, ok := outpointsToIDs[dbaccess.Outpoint{
-				TransactionID: txIn.TxID,
-				Index:         txIn.OutputIndex,
+				TransactionID: txIn.PreviousOutpoint.TransactionID,
+				Index:         txIn.PreviousOutpoint.Index,
 			}]
 			if ok && prevOutputID != 0 {
 				dbTransactionInput.PreviousTransactionOutputID = prevOutputID
@@ -103,7 +103,7 @@ func insertTransactionInputs(dbTx *database.TxContext, transactionHashesToTxsWit
 	return dbaccess.BulkInsert(dbTx, inputsToAdd)
 }
 
-func isTransactionCoinbase(transaction *appmessage.TransactionVerboseData) (bool, error) {
+func isTransactionCoinbase(transaction *appmessage.RPCTransaction) (bool, error) {
 	subnetwork, err := subnetworks.FromString(transaction.SubnetworkID)
 	if err != nil {
 		return false, err

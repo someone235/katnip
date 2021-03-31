@@ -11,15 +11,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-func insertSubnetworks(client *kaspadrpc.Client, dbTx *database.TxContext, verboseBlocks []*appmessage.BlockVerboseData) (
+func insertSubnetworks(client *kaspadrpc.Client, dbTx *database.TxContext, blocks []*appmessage.RPCBlock) (
 	subnetworkIDsToIDs map[string]uint64, err error) {
 
 	onEnd := logger.LogAndMeasureExecutionTime(log, "insertSubnetworks")
 	defer onEnd()
 
 	subnetworkSet := make(map[string]struct{})
-	for _, block := range verboseBlocks {
-		for _, transaction := range block.TransactionVerboseData {
+	for _, block := range blocks {
+		for _, transaction := range block.Transactions {
 			subnetworkSet[transaction.SubnetworkID] = struct{}{}
 		}
 	}

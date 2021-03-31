@@ -24,20 +24,20 @@ func insertTransactionOutputs(dbTx *database.TxContext, transactionHashesToTxsWi
 		if !transaction.isNew {
 			continue
 		}
-		for i, txOut := range transaction.verboseTx.TransactionVerboseOutputs {
-			scriptPubKey, err := hex.DecodeString(txOut.ScriptPubKey.Hex)
+		for i, txOut := range transaction.tx.Outputs {
+			scriptPubKey, err := hex.DecodeString(txOut.ScriptPublicKey.Script)
 			if err != nil {
 				return errors.WithStack(err)
 			}
 			var addressID *uint64
-			if txOut.ScriptPubKey.Address != "" {
-				addressIDValue := addressesToAddressIDs[txOut.ScriptPubKey.Address]
+			if txOut.VerboseData.ScriptPublicKeyAddress != "" {
+				addressIDValue := addressesToAddressIDs[txOut.VerboseData.ScriptPublicKeyAddress]
 				addressID = &addressIDValue
 			}
 			outputsToAdd = append(outputsToAdd, &dbmodels.TransactionOutput{
 				TransactionID: transaction.id,
 				Index:         uint32(i),
-				Value:         txOut.Value,
+				Value:         txOut.Amount,
 				IsSpent:       false, // This must be false for updateSelectedParentChain to work properly
 				ScriptPubKey:  scriptPubKey,
 				AddressID:     addressID,

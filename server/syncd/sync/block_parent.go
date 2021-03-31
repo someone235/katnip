@@ -10,13 +10,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-func insertBlockParents(dbTx *database.TxContext, blocks []*appmessage.BlockVerboseData, blockHashesToIDs map[string]uint64) error {
+func insertBlockParents(dbTx *database.TxContext, blocks []*appmessage.RPCBlock, blockHashesToIDs map[string]uint64) error {
 	onEnd := logger.LogAndMeasureExecutionTime(log, "insertBlockParents")
 	defer onEnd()
 
 	parentsToAdd := make([]interface{}, 0)
 	for _, block := range blocks {
-		dbBlockParents, err := dbParentBlocksFromVerboseBlock(blockHashesToIDs, block)
+		dbBlockParents, err := dbParentBlocksFromRPCBlock(blockHashesToIDs, block)
 		if err != nil {
 			return err
 		}
@@ -31,21 +31,21 @@ func insertBlockParents(dbTx *database.TxContext, blocks []*appmessage.BlockVerb
 	return nil
 }
 
-func dbParentBlocksFromVerboseBlock(blockHashesToIDs map[string]uint64, verboseBlock *appmessage.BlockVerboseData) ([]*dbmodels.ParentBlock, error) {
+func dbParentBlocksFromRPCBlock(blockHashesToIDs map[string]uint64, block *appmessage.RPCBlock) ([]*dbmodels.ParentBlock, error) {
 	// Exit early if this is the genesis block
-	if len(verboseBlock.ParentHashes) == 0 {
+	if len(block.Header.ParentHashes) == 0 {
 		return nil, nil
 	}
 
-	blockID, ok := blockHashesToIDs[verboseBlock.Hash]
+	blockID, ok := blockHashesToIDs[block.VerboseData.Hash]
 	if !ok {
-		return nil, errors.Errorf("couldn't find block ID for block %s", verboseBlock.Hash)
+		return nil, errors.Errorf("couldn't find block ID for block %s", block.VerboseData.Hash)
 	}
-	dbParentBlocks := make([]*dbmodels.ParentBlock, len(verboseBlock.ParentHashes))
-	for i, parentHash := range verboseBlock.ParentHashes {
+	dbParentBlocks := make([]*dbmodels.ParentBlock, len(block.Header.ParentHashes))
+	for i, parentHash := range block.Header.ParentHashes {
 		parentID, ok := blockHashesToIDs[parentHash]
 		if !ok {
-			return nil, errors.Errorf("missing parent %s for block %s", parentHash, verboseBlock.Hash)
+			return nil, errors.Errorf("missing parent %s for block %s", parentHash, block.VerboseData.Hash)
 		}
 		dbParentBlocks[i] = &dbmodels.ParentBlock{
 			BlockID:       blockID,

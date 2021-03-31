@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func insertTransactionBlocks(dbTx *database.TxContext, blocks []*appmessage.BlockVerboseData,
+func insertTransactionBlocks(dbTx *database.TxContext, blocks []*appmessage.RPCBlock,
 	blockHashesToIDs map[string]uint64, transactionHashesToTxsWithMetadata map[string]*txWithMetadata) error {
 
 	onEnd := logger.LogAndMeasureExecutionTime(log, "insertTransactionBlocks")
@@ -18,13 +18,13 @@ func insertTransactionBlocks(dbTx *database.TxContext, blocks []*appmessage.Bloc
 
 	transactionBlocksToAdd := make([]interface{}, 0)
 	for _, block := range blocks {
-		blockID, ok := blockHashesToIDs[block.Hash]
+		blockID, ok := blockHashesToIDs[block.VerboseData.Hash]
 		if !ok {
-			return errors.Errorf("couldn't find block ID for block %s", block.Hash)
+			return errors.Errorf("couldn't find block ID for block %s", block.VerboseData.Hash)
 		}
-		for i, tx := range block.TransactionVerboseData {
+		for i, tx := range block.Transactions {
 			transactionBlocksToAdd = append(transactionBlocksToAdd, &dbmodels.TransactionBlock{
-				TransactionID: transactionHashesToTxsWithMetadata[tx.Hash].id,
+				TransactionID: transactionHashesToTxsWithMetadata[tx.VerboseData.Hash].id,
 				BlockID:       blockID,
 				Index:         uint32(i),
 			})
