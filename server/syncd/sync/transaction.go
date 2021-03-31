@@ -2,6 +2,7 @@ package sync
 
 import (
 	"encoding/hex"
+
 	"github.com/kaspanet/kaspad/app/appmessage"
 	"github.com/kaspanet/kaspad/domain/consensus/model/externalapi"
 	"github.com/kaspanet/kaspad/domain/consensus/utils/subnetworks"
@@ -14,9 +15,9 @@ import (
 )
 
 type txWithMetadata struct {
-	verboseTx *appmessage.TransactionVerboseData
-	id        uint64
-	isNew     bool
+	tx    *appmessage.RPCTransaction
+	id    uint64
+	isNew bool
 }
 
 func transactionHashesToTxsWithMetadataToTransactionHashes(transactionHashesToTxsWithMetadata map[string]*txWithMetadata) []string {
@@ -29,7 +30,7 @@ func transactionHashesToTxsWithMetadataToTransactionHashes(transactionHashesToTx
 	return hashes
 }
 
-func insertTransactions(dbTx *database.TxContext, blocks []*appmessage.BlockVerboseData, subnetworkIDsToIDs map[string]uint64) (
+func insertTransactions(dbTx *database.TxContext, blocks []*appmessage.RPCBlock, subnetworkIDsToIDs map[string]uint64) (
 	map[string]*txWithMetadata, error) {
 
 	onEnd := logger.LogAndMeasureExecutionTime(log, "insertTransactions")
@@ -39,10 +40,10 @@ func insertTransactions(dbTx *database.TxContext, blocks []*appmessage.BlockVerb
 	for _, block := range blocks {
 		// We do not directly iterate over block.Verbose.RawTx because it is a slice of values, and iterating
 		// over such will re-use the same address, making all pointers pointing into it point to the same address
-		for i := range block.TransactionVerboseData {
-			transaction := block.TransactionVerboseData[i]
-			transactionHashesToTxsWithMetadata[transaction.Hash] = &txWithMetadata{
-				verboseTx: transaction,
+		for i := range block.Transactions {
+			transaction := block.Transactions[i]
+			transactionHashesToTxsWithMetadata[transaction.VerboseData.Hash] = &txWithMetadata{
+				tx: transaction,
 			}
 		}
 	}
@@ -68,26 +69,26 @@ func insertTransactions(dbTx *database.TxContext, blocks []*appmessage.BlockVerb
 
 	transactionsToAdd := make([]interface{}, len(newTransactionHashes))
 	for i, hash := range newTransactionHashes {
-		verboseTx := transactionHashesToTxsWithMetadata[hash].verboseTx
+		tx := transactionHashesToTxsWithMetadata[hash].tx
 
-		payload, err := hex.DecodeString(verboseTx.Payload)
+		payload, err := hex.DecodeString(tx.Payload)
 		if err != nil {
 			return nil, err
 		}
 
-		subnetworkID, ok := subnetworkIDsToIDs[verboseTx.SubnetworkID]
+		subnetworkID, ok := subnetworkIDsToIDs[tx.SubnetworkID]
 		if !ok {
-			return nil, errors.Errorf("couldn't find ID for subnetwork %s", verboseTx.SubnetworkID)
+			return nil, errors.Errorf("couldn't find ID for subnetwork %s", tx.SubnetworkID)
 		}
 
 		transactionsToAdd[i] = &dbmodels.Transaction{
-			TransactionHash: verboseTx.Hash,
-			TransactionID:   verboseTx.TxID,
-			LockTime:        serializer.Uint64ToBytes(verboseTx.LockTime),
+			TransactionHash: tx.VerboseData.Hash,
+			TransactionID:   tx.VerboseData.TransactionID,
+			LockTime:        serializer.Uint64ToBytes(tx.LockTime),
 			SubnetworkID:    subnetworkID,
-			Gas:             verboseTx.Gas,
+			Gas:             tx.Gas,
 			Payload:         payload,
-			Version:         verboseTx.Version,
+			Version:         tx.Version,
 		}
 	}
 
@@ -113,37 +114,37 @@ func insertTransactions(dbTx *database.TxContext, blocks []*appmessage.BlockVerb
 	return transactionHashesToTxsWithMetadata, nil
 }
 
-func convertTxRawResultToMsgTx(tx *appmessage.TransactionVerboseData) (*appmessage.MsgTx, error) {
-	txIns := make([]*appmessage.TxIn, len(tx.TransactionVerboseInputs))
-	for i, txIn := range tx.TransactionVerboseInputs {
-		prevTxID, err := externalapi.NewDomainTransactionIDFromString(txIn.TxID)
+func convertTxRawResultToMsgTx(tx *appmessage.RPCTransaction) (*appmessage.MsgTx, error) {
+	txIns := make([]*appmessage.TxIn, len(tx.Inputs))
+	for i, txIn := range tx.Inputs {
+		prevTxID, err := externalapi.NewDomainTransactionIDFromString(txIn.PreviousOutpoint.TransactionID)
 		if err != nil {
 			return nil, err
 		}
-		signatureScript, err := hex.DecodeString(txIn.ScriptSig.Hex)
+		signatureScript, err := hex.DecodeString(txIn.SignatureScript)
 		if err != nil {
 			return nil, err
 		}
 		txIns[i] = &appmessage.TxIn{
 			PreviousOutpoint: appmessage.Outpoint{
 				TxID:  *prevTxID,
-				Index: txIn.OutputIndex,
+				Index: txIn.PreviousOutpoint.Index,
 			},
 			SignatureScript: signatureScript,
 			Sequence:        txIn.Sequence,
 		}
 	}
-	txOuts := make([]*appmessage.TxOut, len(tx.TransactionVerboseOutputs))
-	for i, txOut := range tx.TransactionVerboseOutputs {
-		scriptPubKey, err := hex.DecodeString(txOut.ScriptPubKey.Hex)
+	txOuts := make([]*appmessage.TxOut, len(tx.Outputs))
+	for i, txOut := range tx.Outputs {
+		scriptPubKey, err := hex.DecodeString(txOut.ScriptPublicKey.Script)
 		if err != nil {
 			return nil, err
 		}
 		txOuts[i] = &appmessage.TxOut{
-			Value: txOut.Value,
+			Value: txOut.Amount,
 			ScriptPubKey: &externalapi.ScriptPublicKey{
 				Script:  scriptPubKey,
-				Version: 0, // TODO: Update it with real version
+				Version: txOut.ScriptPublicKey.Version, // TODO: Update it with real version
 			},
 		}
 	}
