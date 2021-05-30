@@ -4,8 +4,6 @@ import (
 	"encoding/hex"
 
 	"github.com/kaspanet/kaspad/app/appmessage"
-	"github.com/kaspanet/kaspad/domain/consensus/model/externalapi"
-	"github.com/kaspanet/kaspad/domain/consensus/utils/subnetworks"
 	"github.com/kaspanet/kaspad/infrastructure/logger"
 	"github.com/pkg/errors"
 	"github.com/someone235/katnip/server/database"
@@ -97,6 +95,8 @@ func insertTransactions(dbTx *database.TxContext, blocks []*appmessage.RPCBlock,
 		return nil, err
 	}
 
+	log.Debugf("Insert %d transactions", len(transactionsToAdd))
+
 	dbNewTransactions, err := dbaccess.TransactionsByHashes(dbTx, newTransactionHashes)
 	if err != nil {
 		return nil, err
@@ -112,52 +112,4 @@ func insertTransactions(dbTx *database.TxContext, blocks []*appmessage.RPCBlock,
 	}
 
 	return transactionHashesToTxsWithMetadata, nil
-}
-
-func convertTxRawResultToMsgTx(tx *appmessage.RPCTransaction) (*appmessage.MsgTx, error) {
-	txIns := make([]*appmessage.TxIn, len(tx.Inputs))
-	for i, txIn := range tx.Inputs {
-		prevTxID, err := externalapi.NewDomainTransactionIDFromString(txIn.PreviousOutpoint.TransactionID)
-		if err != nil {
-			return nil, err
-		}
-		signatureScript, err := hex.DecodeString(txIn.SignatureScript)
-		if err != nil {
-			return nil, err
-		}
-		txIns[i] = &appmessage.TxIn{
-			PreviousOutpoint: appmessage.Outpoint{
-				TxID:  *prevTxID,
-				Index: txIn.PreviousOutpoint.Index,
-			},
-			SignatureScript: signatureScript,
-			Sequence:        txIn.Sequence,
-		}
-	}
-	txOuts := make([]*appmessage.TxOut, len(tx.Outputs))
-	for i, txOut := range tx.Outputs {
-		scriptPubKey, err := hex.DecodeString(txOut.ScriptPublicKey.Script)
-		if err != nil {
-			return nil, err
-		}
-		txOuts[i] = &appmessage.TxOut{
-			Value: txOut.Amount,
-			ScriptPubKey: &externalapi.ScriptPublicKey{
-				Script:  scriptPubKey,
-				Version: txOut.ScriptPublicKey.Version, // TODO: Update it with real version
-			},
-		}
-	}
-	subnetworkID, err := subnetworks.FromString(tx.SubnetworkID)
-	if err != nil {
-		return nil, err
-	}
-	if subnetworkID.Equal(&subnetworks.SubnetworkIDNative) {
-		return appmessage.NewNativeMsgTx(tx.Version, txIns, txOuts), nil
-	}
-	payload, err := hex.DecodeString(tx.Payload)
-	if err != nil {
-		return nil, err
-	}
-	return appmessage.NewSubnetworkMsgTx(tx.Version, txIns, txOuts, subnetworkID, tx.Gas, payload), nil
 }

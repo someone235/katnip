@@ -2,6 +2,7 @@ package dbaccess
 
 import (
 	"github.com/go-pg/pg/v9/orm"
+	"github.com/pkg/errors"
 	"github.com/someone235/katnip/server/database"
 	"github.com/someone235/katnip/server/dbmodels"
 )
@@ -26,5 +27,5 @@ func BulkInsert(ctx database.Context, objects []interface{}) error {
 	if err != nil {
 		return err
 	}
-	return db.Insert(&objects)
+	return errors.WithStack(db.Insert(&objects))
 }
